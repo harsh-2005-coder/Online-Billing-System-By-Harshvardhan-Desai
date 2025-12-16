@@ -1,0 +1,812 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Samarth Cashew Industries</title>
+
+  <!-- Chart.js for charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <style>
+    /* ====== Theme (Glassmorphism) ====== */
+    :root{
+      --bg1: #e9f0ff;
+      --bg2: #f7fbff;
+      --glass: rgba(255,255,255,0.55);
+      --glass-strong: rgba(255,255,255,0.72);
+      --accent: #2563eb;
+      --accent-2: #0f4ad6;
+      --muted: #6b7280;
+      --danger: #dc2626;
+      --success: #16a34a;
+      --card-shadow: 0 10px 30px rgba(16,24,40,0.08);
+      --glass-border: rgba(255,255,255,0.6);
+      --glass-blur: 10px;
+      --radius: 12px;
+    }
+    *{box-sizing:border-box;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+    a{color:inherit}
+
+    /* ------- Login (single box) ------- */
+    .screen {
+      min-height:100vh; display:flex; align-items:center; justify-content:center; padding:32px;
+    }
+    .login-card{
+      width:420px; border-radius:16px; padding:22px; background:linear-gradient(180deg, rgba(255,255,255,0.65), rgba(255,255,255,0.55));
+      box-shadow:var(--card-shadow); backdrop-filter: blur(var(--glass-blur)); border:1px solid var(--glass-border);
+      transition:transform .28s ease;
+    }
+    .login-card:hover{ transform:translateY(-6px); }
+    .login-brand{ font-size:20px; font-weight:800; color:var(--accent-2); margin-bottom:6px; }
+    .login-sub{ color:var(--muted); margin-bottom:16px; font-size:13px; }
+    .input, select { width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(15,74,214,0.08); margin:8px 0; background:rgba(255,255,255,0.9); font-size:14px; }
+    .row{display:flex; gap:8px}
+    .btn { background:linear-gradient(180deg,var(--accent),var(--accent-2)); color:white; border:none; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:700; }
+    .btn.ghost { background:transparent; border:1px solid rgba(15,74,214,0.12); color:var(--accent-2); }
+    .small-muted{ color:var(--muted); font-size:13px; margin-top:8px; min-height:18px; }
+
+    /* ===== App layout ===== */
+    .app { display:flex; height:100vh; overflow:hidden; }
+    .sidebar {
+      width:360px; padding:20px; background:linear-gradient(180deg,var(--accent-2),var(--accent)); color:#fff; display:flex; flex-direction:column;
+      gap:12px; box-shadow: 8px 0 30px rgba(15,74,214,0.06);
+    }
+    .brand{ font-weight:800; font-size:20px; color:#fff; }
+    .signed{ color:rgba(255,255,255,0.9); font-size:14px; margin-top:6px; }
+    .nav{ margin-top:16px; display:flex; flex-direction:column; gap:6px; overflow:auto; }
+    .nav button{ text-align:left; background:transparent; border:none; color:white; padding:12px 14px; border-radius:10px; cursor:pointer; font-weight:700; }
+    .nav button.active, .nav button:hover{ background: rgba(255,255,255,0.08); }
+    .sidebar .bottom { margin-top:auto; display:flex; gap:8px; align-items:center; }
+
+    .main { flex:1; padding:22px; overflow:auto; }
+    .topbar { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:16px; }
+    .page-title { font-size:20px; color:var(--accent-2); margin:0; }
+    .search { display:flex; gap:8px; align-items:center; }
+    .card-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px; margin-bottom:14px; }
+    .card { background:var(--glass); border-radius:12px; padding:14px; box-shadow:var(--card-shadow); border:1px solid rgba(255,255,255,0.6); }
+    .card h3 { margin:0 0 8px 0; color:var(--accent-2); font-size:16px; }
+    table { width:100%; border-collapse:collapse; font-size:14px; margin-top:8px; }
+    th,td{ padding:10px; border-bottom:1px solid rgba(15,74,214,0.06); text-align:left; vertical-align:middle; }
+    th{ background:rgba(255,255,255,0.35); color:var(--accent-2); font-weight:700; }
+    .small-muted{ color:var(--muted); font-size:13px; }
+    .low { color:var(--danger); font-weight:800; }
+
+    .pos { display:grid; grid-template-columns:1fr 420px; gap:12px; }
+    .product-list, .pos-cart { background:var(--glass); padding:12px; border-radius:10px; height:64vh; overflow:auto; border:1px solid rgba(255,255,255,0.6); }
+    .product-row { display:flex; justify-content:space-between; gap:8px; padding:10px 6px; border-bottom:1px solid rgba(15,74,214,0.03); align-items:center; }
+    .muted { color:var(--muted); font-size:13px; }
+    .right { text-align:right; }
+    .total-big{ font-size:20px; font-weight:800; color:var(--accent-2); }
+
+    /* modal */
+    .modal { position:fixed; inset:0; background:rgba(2,6,23,0.45); display:flex; align-items:center; justify-content:center; z-index:120; }
+    .modal .box { width:920px; max-width:96%; max-height:92vh; overflow:auto; background:linear-gradient(180deg,rgba(255,255,255,0.95),rgba(255,255,255,0.9)); border-radius:12px; padding:16px; box-shadow:var(--card-shadow); border:1px solid rgba(0,0,0,0.04); }
+
+    /* responsive */
+    @media (max-width:980px) { .pos { grid-template-columns:1fr; } .sidebar{ width:280px; } }
+    @media (max-width:760px) { .sidebar{ display:none; } .app{ flex-direction:column; } .main{ padding:12px; } }
+  </style>
+</head>
+<body>
+
+<!-- ===== LOGIN SCREEN ===== -->
+<div id="loginScreen" class="screen">
+  <div class="login-card" role="dialog" aria-modal="true" aria-label="Login dialog">
+    <div class="login-brand">Samarth Cashew Industries</div>
+    <div class="login-sub">Advanced Cashew Billing — Login</div>
+
+    <select id="loginRole" class="input" aria-label="Select role">
+      <option value="owner">Owner / Admin</option>
+      <option value="sales">Salesman</option>
+    </select>
+
+    <input id="loginUser" class="input" placeholder="Username" autocomplete="off" />
+    <input id="loginPass" class="input" placeholder="Password" type="password" autocomplete="off" />
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn" onclick="doLogin()">Login</button>
+      <button class="btn ghost" onclick="autoFill()">Auto-fill</button>
+    </div>
+
+    <div id="loginError" class="small-muted" style="color:var(--danger);margin-top:8px;min-height:18px"></div>
+    <div class="small-muted" style="margin-top:8px">If you forgot credentials, use auto-fill.</div>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app" class="app" style="display:none">
+  <aside class="sidebar" role="navigation" aria-label="Sidebar">
+    <div>
+      <div class="brand">Samarth Cashew Industries</div>
+      <div id="signedAs" class="signed">Signed in: —</div>
+    </div>
+
+    <nav id="menu" class="nav" aria-label="Main menu"></nav>
+
+    <div class="bottom">
+      <div class="small-muted" style="flex:1;" id="todayLabel"></div>
+      <div style="margin-left:auto">
+        <button class="btn ghost" onclick="doLogout()">Logout</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main" role="main">
+    <div class="topbar">
+      <h2 class="page-title" id="pageTitle">Dashboard</h2>
+      <div class="search">
+        <input id="globalSearch" class="input" placeholder="Search product / invoice / sale..." oninput="globalSearch(this.value)" style="width:360px" />
+        <button class="btn ghost" title="Open POS" onclick="showView('billing')">Open POS</button>
+      </div>
+    </div>
+
+    <section id="content"></section>
+
+    <footer class="small-muted" style="margin-top:18px">© Samarth Cashew Industries</footer>
+  </main>
+</div>
+
+<!-- ===== Modal ===== -->
+<div id="modal" class="modal" style="display:none"><div class="box" id="modalBox"></div></div>
+
+<script>
+/* =========================
+   Single-file Advanced Billing
+   All data in localStorage (no backend)
+   Credentials (hidden):
+     - Owner: admin / 123
+     - Salesman: sales / 123
+   ========================= */
+
+const KEY_PRODUCTS = 'sci_v4_products';
+const KEY_INVOICES = 'sci_v4_invoices';
+const KEY_SALES = 'sci_v4_sales';
+const KEY_INVCOUNT = 'sci_v4_invcount';
+const KEY_GST = 'sci_v4_gst';
+
+const CREDENTIALS = {
+  owner: {user: 'admin', pass: '123'},
+  sales: {user: 'sales', pass: '123'}
+};
+
+let PRODUCTS = JSON.parse(localStorage.getItem(KEY_PRODUCTS) || 'null');
+let INVOICES = JSON.parse(localStorage.getItem(KEY_INVOICES) || 'null');
+let SALES = JSON.parse(localStorage.getItem(KEY_SALES) || 'null');
+let INVCOUNT = parseInt(localStorage.getItem(KEY_INVCOUNT) || '0', 10);
+let GST = parseFloat(localStorage.getItem(KEY_GST) || '5');
+
+if(!PRODUCTS){
+  PRODUCTS = [
+    {id:1,name:'W320 Cashew',sku:'W320',pricePerKg:950,costPerKg:700,stockKg:120},
+    {id:2,name:'W240 Cashew',sku:'W240',pricePerKg:1250,costPerKg:900,stockKg:80},
+    {id:3,name:'W180 Cashew',sku:'W180',pricePerKg:1650,costPerKg:1200,stockKg:60},
+    {id:4,name:'JH Cashew',sku:'JH',pricePerKg:2200,costPerKg:1800,stockKg:40}
+  ];
+  localStorage.setItem(KEY_PRODUCTS, JSON.stringify(PRODUCTS));
+}
+if(!INVOICES){ INVOICES = []; localStorage.setItem(KEY_INVOICES, JSON.stringify(INVOICES)); }
+if(!SALES){ SALES = []; localStorage.setItem(KEY_SALES, JSON.stringify(SALES)); }
+if(!localStorage.getItem(KEY_GST)) localStorage.setItem(KEY_GST, String(GST));
+
+let CURRENT = null; // { role: 'owner'|'sales', username: '...' }
+let CART = [];
+let CHARTS = {};
+
+/* ---------- utilities ---------- */
+function saveAll(){
+  localStorage.setItem(KEY_PRODUCTS, JSON.stringify(PRODUCTS));
+  localStorage.setItem(KEY_INVOICES, JSON.stringify(INVOICES));
+  localStorage.setItem(KEY_SALES, JSON.stringify(SALES));
+  localStorage.setItem(KEY_INVCOUNT, String(INVCOUNT));
+  localStorage.setItem(KEY_GST, String(GST));
+}
+
+function fmt(n){
+  return '₹' + Number(n).toLocaleString('en-IN', {maximumFractionDigits:2});
+}
+function today(){ return new Date().toISOString().slice(0,10); }
+function uid(prefix='ID'){ return prefix + '-' + Date.now().toString(36); }
+function escapeHtml(s){ return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+
+/* ---------- Login ---------- */
+function autoFill(){
+  const role = document.getElementById('loginRole').value;
+  if(role === 'owner'){ document.getElementById('loginUser').value = CREDENTIALS.owner.user; document.getElementById('loginPass').value = CREDENTIALS.owner.pass; }
+  else { document.getElementById('loginUser').value = CREDENTIALS.sales.user; document.getElementById('loginPass').value = CREDENTIALS.sales.pass; }
+}
+function doLogin(){
+  const role = document.getElementById('loginRole').value;
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value.trim();
+  const err = document.getElementById('loginError');
+  err.innerText = '';
+  if(role === 'owner' && u === CREDENTIALS.owner.user && p === CREDENTIALS.owner.pass){
+    CURRENT = {role:'owner', username: 'admin'};
+    openApp();
+  } else if(role === 'sales' && u === CREDENTIALS.sales.user && p === CREDENTIALS.sales.pass){
+    CURRENT = {role:'sales', username: 'sales'};
+    openApp();
+  } else {
+    err.innerText = 'Invalid credentials — use auto-fill to test';
+  }
+}
+
+/* ---------- App open/close ---------- */
+function openApp(){
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('signedAs').innerText = `Signed in: ${CURRENT.username} (${CURRENT.role})`;
+  document.getElementById('todayLabel').innerText = new Date().toLocaleDateString();
+  buildMenu();
+  showView(CURRENT.role === 'owner' ? 'dashboard' : 'billing');
+}
+
+function doLogout(){
+  if(!confirm('Logout?')) return;
+  CURRENT = null;
+  CART = [];
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+}
+
+/* ---------- menu ---------- */
+function buildMenu(){
+  const menu = document.getElementById('menu');
+  menu.innerHTML = '';
+  if(CURRENT.role === 'owner'){
+    addMenu('Dashboard','dashboard');
+    addMenu('Products & Inventory','products');
+    addMenu('Stock Summary','stock');
+    addMenu('POS / Billing','billing');
+    addMenu("Today's Sales",'today');
+    addMenu('Sales Records','sales');
+    addMenu('Profit Report','profit');
+    addMenu('Monthly Chart','charts');
+    addMenu('Settings (GST)','settings');
+  } else {
+    addMenu('POS / Billing','billing');
+    addMenu("Today's Sales",'today');
+    addMenu('Sales Records','sales');
+  }
+  // logout button inside nav (visible too)
+  const logoutBtn = document.createElement('button');
+  logoutBtn.innerText = 'Logout';
+  logoutBtn.onclick = doLogout;
+  logoutBtn.className = 'nav-logout';
+  menu.appendChild(logoutBtn);
+}
+function addMenu(label, view){
+  const btn = document.createElement('button');
+  btn.innerText = label;
+  btn.onclick = () => showView(view);
+  btn.id = 'menu-' + view;
+  document.getElementById('menu').appendChild(btn);
+}
+function setActive(view){
+  document.querySelectorAll('#menu button').forEach(b=>b.classList.remove('active'));
+  const el = document.getElementById('menu-' + view);
+  if(el) el.classList.add('active');
+}
+
+/* ---------- view switch ---------- */
+function showView(view){
+  setActive(view);
+  document.getElementById('pageTitle').innerText = view.charAt(0).toUpperCase() + view.slice(1);
+  const out = document.getElementById('content');
+  out.innerHTML = '';
+  switch(view){
+    case 'dashboard': renderDashboard(out); break;
+    case 'products': renderProducts(out); break;
+    case 'stock': renderStock(out); break;
+    case 'billing': renderPOS(out); break;
+    case 'sales': renderInvoices(out); break;
+    case 'today': renderToday(out); break;
+    case 'profit': renderProfit(out); break;
+    case 'charts': renderCharts(out); break;
+    case 'settings': renderSettings(out); break;
+    default: out.innerHTML = '<div class="card">Coming soon</div>';
+  }
+}
+
+/* ====== DASHBOARD ====== */
+function renderDashboard(out){
+  const totalSales = SALES.reduce((s,r)=>s + (r.totalAmount||0), 0);
+  const invoices = INVOICES.length;
+  const productsCount = PRODUCTS.length;
+  const low = PRODUCTS.filter(p=>p.stockKg < 10).length;
+
+  const row = document.createElement('div'); row.className = 'card-row';
+  row.append(card('Total Sales', fmt(totalSales)));
+  row.append(card('Invoices', invoices));
+  row.append(card('Products', productsCount));
+  row.append(card('Low stock', low > 0 ? `<span class="low">${low} low</span>` : 'OK'));
+  out.appendChild(row);
+
+  const quick = document.createElement('div'); quick.className = 'card';
+  quick.innerHTML = `<h3>Quick actions</h3>
+    <div style="display:flex;gap:8px">
+      <button class="btn" onclick="showView('products')">Manage Products</button>
+      <button class="btn" onclick="showView('billing')">Open POS</button>
+      <button class="btn" onclick="showView('today')">Today's Sales</button>
+    </div>`;
+  out.appendChild(quick);
+
+  const recent = document.createElement('div'); recent.className='card';
+  recent.innerHTML = `<h3>Recent Invoices</h3><div id="recentInv"></div>`;
+  out.appendChild(recent);
+  renderRecentInv();
+}
+function card(title, value){
+  const c = document.createElement('div'); c.className='card';
+  c.innerHTML = `<div class="small-muted">${title}</div><div style="font-size:18px;margin-top:8px">${value}</div>`;
+  return c;
+}
+function renderRecentInv(){
+  const el = document.getElementById('recentInv');
+  if(!el) return;
+  const recent = INVOICES.slice(-6).reverse();
+  if(recent.length===0){ el.innerHTML = '<div class="small-muted">No invoices yet</div>'; return; }
+  let html = '<table><tr><th>#</th><th>Invoice</th><th>Date</th><th>Total</th></tr>';
+  recent.forEach((inv,i) => html += `<tr><td>${i+1}</td><td>${inv.invoiceNo}</td><td>${inv.date}</td><td>${fmt(inv.totalAmount)}</td></tr>`);
+  html += '</table>';
+  el.innerHTML = html;
+}
+
+/* ====== PRODUCTS (CRUD) ====== */
+function renderProducts(out){
+  const box = document.createElement('div'); box.className='card';
+  box.innerHTML = `<h3>Add Product</h3>
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
+    <input id="p_name" class="input" placeholder="Name"/>
+    <input id="p_sku" class="input" placeholder="SKU"/>
+    <input id="p_price" class="input" placeholder="Sell price/kg"/>
+    <input id="p_cost" class="input" placeholder="Cost price/kg"/>
+    <input id="p_stock" class="input" placeholder="Stock (kg)"/>
+    <div><button class="btn" onclick="addProduct()">Add product</button></div>
+  </div>`;
+  out.appendChild(box);
+
+  const list = document.createElement('div'); list.className='card'; list.innerHTML = '<h3>Products</h3><div id="productsTable"></div>';
+  out.appendChild(list);
+  updateProductsTable();
+}
+
+function addProduct(){
+  const n = document.getElementById('p_name').value.trim();
+  const s = document.getElementById('p_sku').value.trim() || ('SKU' + Date.now());
+  const price = parseFloat(document.getElementById('p_price').value) || 0;
+  const cost = parseFloat(document.getElementById('p_cost').value) || 0;
+  const stock = parseFloat(document.getElementById('p_stock').value) || 0;
+  if(!n || price <= 0 || cost <= 0){ alert('Enter valid name, sell price and cost'); return; }
+  const id = PRODUCTS.length ? Math.max(...PRODUCTS.map(p=>p.id)) + 1 : 1;
+  PRODUCTS.push({id, name:n, sku:s, pricePerKg:price, costPerKg:cost, stockKg:stock});
+  saveAll();
+  document.getElementById('p_name').value=''; document.getElementById('p_sku').value=''; document.getElementById('p_price').value=''; document.getElementById('p_cost').value=''; document.getElementById('p_stock').value='';
+  updateProductsTable();
+  updateBillProducts();
+  alert('Product added');
+}
+function updateProductsTable(){
+  const wrap = document.getElementById('productsTable');
+  if(!wrap) return;
+  let html = '<table><tr><th>#</th><th>Name</th><th>SKU</th><th>Sell/kg</th><th>Cost/kg</th><th>Stock</th><th>Actions</th></tr>';
+  PRODUCTS.forEach((p,i) => html += `<tr><td>${i+1}</td><td>${escapeHtml(p.name)}</td><td>${p.sku}</td><td>${fmt(p.pricePerKg)}</td><td>${fmt(p.costPerKg)}</td><td>${p.stockKg.toFixed(3)}</td>
+    <td>
+      <button class="btn ghost" onclick="openEdit(${p.id})">Edit</button>
+      <button class="btn" onclick="deleteProduct(${p.id})">Delete</button>
+    </td></tr>`);
+  html += '</table>';
+  wrap.innerHTML = html;
+}
+function openEdit(id){
+  const p = PRODUCTS.find(x=>x.id === id);
+  if(!p) return;
+  showModal(`<h3>Edit Product</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <input id="e_name" class="input" value="${escapeHtml(p.name)}"/>
+      <input id="e_sku" class="input" value="${escapeHtml(p.sku)}"/>
+      <input id="e_price" class="input" value="${p.pricePerKg}"/>
+      <input id="e_cost" class="input" value="${p.costPerKg}"/>
+      <input id="e_stock" class="input" value="${p.stockKg}"/>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn" onclick="saveEdit(${p.id})">Save</button>
+      <button class="btn ghost" onclick="closeModal()">Cancel</button>
+    </div>`);
+}
+function saveEdit(id){
+  const idx = PRODUCTS.findIndex(x=>x.id === id);
+  if(idx < 0) return;
+  const n = document.getElementById('e_name').value.trim();
+  const s = document.getElementById('e_sku').value.trim();
+  const pr = parseFloat(document.getElementById('e_price').value) || 0;
+  const c = parseFloat(document.getElementById('e_cost').value) || 0;
+  const st = parseFloat(document.getElementById('e_stock').value) || 0;
+  if(!n || pr <= 0 || c <= 0){ alert('Invalid'); return; }
+  PRODUCTS[idx] = { id, name:n, sku:s, pricePerKg:pr, costPerKg:c, stockKg:st };
+  saveAll();
+  updateProductsTable();
+  updateBillProducts();
+  closeModal();
+}
+function deleteProduct(id){
+  if(!confirm('Delete product?')) return;
+  PRODUCTS = PRODUCTS.filter(p=>p.id !== id);
+  saveAll();
+  updateProductsTable();
+  updateBillProducts();
+}
+
+/* ====== STOCK ====== */
+function renderStock(out){
+  let html = '<div class="card"><h3>Stock Summary</h3><table><tr><th>#</th><th>Product</th><th>SKU</th><th>Stock(kg)</th><th>Low</th></tr>';
+  PRODUCTS.forEach((p,i) => html += `<tr><td>${i+1}</td><td>${escapeHtml(p.name)}</td><td>${p.sku}</td><td>${p.stockKg.toFixed(3)}</td><td>${p.stockKg < 10 ? '<span class="low">LOW</span>' : 'OK'}</td></tr>`);
+  html += '</table></div>';
+  out.innerHTML = html;
+}
+
+/* ====== POS / Billing ====== */
+function renderPOS(out){
+  const container = document.createElement('div'); container.className = 'card';
+  container.innerHTML = `<h3>POS / Billing</h3>
+    <div style="display:grid;grid-template-columns:1fr 120px 120px;gap:8px">
+      <select id="posProduct" class="input"></select>
+      <input id="posQty" class="input" placeholder="Qty (kg)" />
+      <input id="posPrice" class="input" placeholder="Price/kg (optional)" />
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <input id="posGM" class="input" placeholder="GM / Batch (optional)" style="width:160px"/>
+      <input id="posDiscount" class="input" placeholder="Discount %" style="width:120px"/>
+      <input id="posGST" class="input" placeholder="GST %" style="width:120px" value="${GST}"/>
+      <select id="posPayment" class="input" style="width:160px"><option>Cash</option><option>UPI</option><option>Card</option></select>
+      <button class="btn" onclick="posAdd()">Add</button>
+    </div>
+    <div id="posCart" style="margin-top:12px"></div>`;
+  out.appendChild(container);
+
+  const payCard = document.createElement('div'); payCard.className = 'card';
+  payCard.innerHTML = `<h3>Payment</h3><div id="posTotals" class="small-muted">No items</div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn" onclick="posPay(false)">Pay</button>
+      <button class="btn ghost" onclick="posPay(true)">Pay & Print</button>
+      <button class="btn ghost" onclick="posClear()">Clear</button>
+    </div>`;
+  out.appendChild(payCard);
+
+  updateBillProducts();
+  renderCart();
+}
+
+function updateBillProducts(){
+  const sel = document.getElementById('posProduct') || document.getElementById('billProduct');
+  if(!sel) return;
+  sel.innerHTML = PRODUCTS.map(p => `<option value="${p.id}">${escapeHtml(p.name)} | ${p.sku} | ${fmt(p.pricePerKg)}/kg | Stock:${p.stockKg}kg</option>`).join('');
+}
+
+function posAdd(){
+  const pid = parseInt(document.getElementById('posProduct').value,10);
+  const kg = parseFloat(document.getElementById('posQty').value) || 0;
+  const override = parseFloat(document.getElementById('posPrice').value) || 0;
+  const gm = document.getElementById('posGM').value.trim() || null;
+  const discount = parseFloat(document.getElementById('posDiscount').value) || 0;
+  const gst = parseFloat(document.getElementById('posGST').value) || GST;
+  if(!pid || kg <= 0) return alert('Select product and enter qty');
+  const prod = PRODUCTS.find(x=>x.id === pid);
+  if(!prod) return alert('Product not found');
+  if(kg > prod.stockKg) return alert('Not enough stock');
+  const pricePerKg = (override > 0) ? override : prod.pricePerKg;
+  const net = pricePerKg * kg * (1 - discount/100);
+  const total = net * (1 + gst/100);
+  CART.push({productId: pid, kg, pricePerKg, discount, gst, total, costPerKg: prod.costPerKg, gm});
+  // deduct stock immediately
+  prod.stockKg = +(prod.stockKg - kg).toFixed(3);
+  saveAll();
+  renderCart();
+  updateBillProducts();
+  updateProductsTable();
+  // clear inputs
+  document.getElementById('posQty').value = '';
+  document.getElementById('posPrice').value = '';
+  document.getElementById('posGM').value = '';
+}
+
+function renderCart(){
+  const wrap = document.getElementById('posCart');
+  if(!wrap) return;
+  if(CART.length === 0){ wrap.innerHTML = '<div class="small-muted">Cart empty</div>'; const t=document.getElementById('posTotals'); if(t) t.innerText = 'No items'; return; }
+  let html = '<table><tr><th>#</th><th>Item</th><th>kg</th><th>Rate/kg</th><th>GST%</th><th>Total</th><th>Action</th></tr>';
+  let sum = 0;
+  CART.forEach((c,i) => {
+    const p = PRODUCTS.find(x=>x.id === c.productId);
+    html += `<tr><td>${i+1}</td><td>${escapeHtml(p.name)}${c.gm?'<div class="muted">('+escapeHtml(c.gm)+')</div>':''}</td><td>${c.kg.toFixed(3)}</td><td>${fmt(c.pricePerKg)}</td><td>${c.gst}%</td><td>${fmt(c.total)}</td><td><button class="btn ghost" onclick="removeFromCart(${i})">Remove</button></td></tr>`;
+    sum += c.total;
+  });
+  html += '</table>';
+  wrap.innerHTML = html;
+  const t = document.getElementById('posTotals');
+  if(t) t.innerHTML = `Subtotal: ${fmt(sum)}`;
+}
+
+function removeFromCart(i){
+  const it = CART[i];
+  if(!it) return;
+  // restore stock
+  const p = PRODUCTS.find(x=>x.id === it.productId);
+  if(p) p.stockKg = +(p.stockKg + it.kg).toFixed(3);
+  CART.splice(i,1);
+  saveAll();
+  renderCart();
+  updateBillProducts();
+  updateProductsTable();
+}
+
+function posClear(){
+  if(!confirm('Clear cart?')) return;
+  // restore stock for all items
+  CART.forEach(it => {
+    const p = PRODUCTS.find(x=>x.id === it.productId);
+    if(p) p.stockKg = +(p.stockKg + it.kg).toFixed(3);
+  });
+  CART = [];
+  saveAll();
+  renderCart();
+  updateBillProducts();
+  updateProductsTable();
+}
+
+function posPay(printAfter=false){
+  if(CART.length === 0) return alert('Cart empty');
+  showModal(`<h3>Payment</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <input id="payCustomer" class="input" placeholder="Customer name (optional)"/>
+      <select id="payMode" class="input"><option>Cash</option><option>UPI</option><option>Card</option></select>
+    </div>
+    <div id="paySummary" style="margin-top:10px"></div>
+    <input type="hidden" id="printFlag" value="${printAfter?1:0}"/>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn" onclick="completePayment()">Confirm</button>
+      <button class="btn ghost" onclick="closeModal()">Cancel</button>
+    </div>`);
+  updatePaySummary();
+}
+function updatePaySummary(){
+  const sum = CART.reduce((s,it) => s + it.total, 0);
+  const gstTotal = CART.reduce((s,it) => s + (it.total - (it.total/(1+it.gst/100))), 0);
+  const subtotal = sum - gstTotal;
+  const el = document.getElementById('paySummary');
+  if(el) el.innerHTML = `<div>Subtotal: ${fmt(subtotal)}</div><div>GST: ${fmt(gstTotal)}</div><div style="font-weight:700;margin-top:6px">Total: ${fmt(sum)}</div>`;
+}
+function completePayment(){
+  const cust = document.getElementById('payCustomer').value || '';
+  const mode = document.getElementById('payMode').value;
+  const printFlag = document.getElementById('printFlag').value === '1';
+  INVCOUNT++;
+  const invNo = 'SCI-' + String(INVCOUNT).padStart(6,'0');
+  const d = today();
+  const subtotal = CART.reduce((s,it) => s + (it.total/(1 + it.gst/100)), 0);
+  const gstTotal = CART.reduce((s,it) => s + (it.total - (it.total/(1 + it.gst/100))), 0);
+  const total = CART.reduce((s,it) => s + it.total, 0);
+  const invoice = {
+    invoiceNo: invNo, date: d, customer: cust, paymentMode: mode,
+    items: CART.map(it => ({productId: it.productId, kg: it.kg, pricePerKg: it.pricePerKg, gst: it.gst, total: it.total, gm: it.gm})),
+    subtotal, gstTotal, totalAmount: total
+  };
+  INVOICES.push(invoice);
+  // push sales entries
+  CART.forEach(it => {
+    const p = PRODUCTS.find(x=>x.id === it.productId) || {name:'Unknown', costPerKg:0};
+    SALES.push({
+      invoiceNo: invNo, productId: it.productId, productName: p.name,
+      qtyKg: it.kg, sellPerKg: it.pricePerKg, costPerKg: p.costPerKg || 0,
+      gstPerc: it.gst, totalAmount: it.total, date: d
+    });
+  });
+  saveAll();
+  closeModal();
+  CART = [];
+  renderCart();
+  updateBillProducts();
+  updateProductsTable();
+  renderRecentInv();
+  alert('Payment recorded: ' + invNo);
+  if(printFlag) printInvoice(invNo);
+}
+
+/* ====== Invoices & Print ====== */
+function renderInvoices(out){
+  let html = '<div class="card"><h3>Invoices</h3>';
+  if(INVOICES.length === 0){ html += '<div class="small-muted">No invoices</div></div>'; out.innerHTML = html; return; }
+  html += '<table><tr><th>#</th><th>Invoice</th><th>Date</th><th>Customer</th><th>Total</th><th>Action</th></tr>';
+  INVOICES.slice().reverse().forEach((inv, idx) => {
+    html += `<tr><td>${idx+1}</td><td>${inv.invoiceNo}</td><td>${inv.date}</td><td>${escapeHtml(inv.customer||'-')}</td><td>${fmt(inv.totalAmount)}</td><td><button class="btn ghost" onclick="printInvoice('${inv.invoiceNo}')">Print</button></td></tr>`;
+  });
+  html += '</table></div>';
+  out.innerHTML = html;
+}
+function printInvoice(invoiceNo){
+  const inv = INVOICES.find(i => i.invoiceNo === invoiceNo);
+  if(!inv) return alert('Invoice not found');
+  const companyHeader = `<div style="display:flex;justify-content:space-between;align-items:flex-start">
+    <div><h2 style="margin:0">Samarth Cashew Industries</h2><div class="small-muted">Address: Plot No. X, MIDC</div></div>
+    <div style="text-align:right"><div style="font-weight:700">Invoice: ${inv.invoiceNo}</div><div class="small-muted">Date: ${inv.date}</div></div>
+  </div><hr/>`;
+  let itemsHtml = '<table border="1" cellpadding="6" cellspacing="0" style="width:100%;border-collapse:collapse"><tr style="background:#f3f6fb"><th>Item</th><th style="text-align:center">kg</th><th style="text-align:right">Rate/kg</th><th style="text-align:right">Amount</th></tr>';
+  inv.items.forEach(it => {
+    const p = PRODUCTS.find(x=>x.id === it.productId) || {name:'Item'};
+    itemsHtml += `<tr><td>${p.name}${it.gm?'<div class="small-muted">('+escapeHtml(it.gm)+')</div>':''}</td><td style="text-align:center">${it.kg.toFixed(3)}</td><td style="text-align:right">${fmt(it.pricePerKg)}</td><td style="text-align:right">${fmt(it.total)}</td></tr>`;
+  });
+  itemsHtml += '</table>';
+  const totals = `<div style="display:flex;justify-content:flex-end;margin-top:12px"><div style="text-align:right"><div>Subtotal: ${fmt(inv.subtotal)}</div><div>GST: ${fmt(inv.gstTotal)}</div><div style="font-weight:700">TOTAL: ${fmt(inv.totalAmount)}</div></div></div>`;
+  const footer = `<div style="margin-top:18px;font-size:13px;color:#475569">Thank you for your business.</div>`;
+  const html = `<div style="font-family:Inter,Arial;padding:18px">${companyHeader}<div>Customer: <b>${escapeHtml(inv.customer||'-')}</b></div>${itemsHtml}${totals}${footer}</div>`;
+  const w = window.open('','_blank','width=900,height=700');
+  w.document.write(html);
+  w.document.close();
+  setTimeout(()=> w.print(), 300);
+}
+
+/* ====== Today & Profit ====== */
+function renderToday(out){
+  const d = today();
+  const todays = SALES.filter(s => s.date === d);
+  let html = '<div class="card"><h3>Today\'s Sales</h3>';
+  if(todays.length === 0){ html += '<div class="small-muted">No sales today</div></div>'; out.innerHTML = html; return; }
+  html += '<table><tr><th>#</th><th>Invoice</th><th>Product</th><th>Qty</th><th>Total</th></tr>';
+  todays.forEach((s,i) => html += `<tr><td>${i+1}</td><td>${s.invoiceNo}</td><td>${escapeHtml(s.productName)}</td><td>${s.qtyKg}</td><td>${fmt(s.totalAmount)}</td></tr>`);
+  html += '</table></div>';
+  out.innerHTML = html;
+}
+
+function renderProfit(out){
+  // aggregate by product
+  const grouped = {};
+  SALES.forEach(s => {
+    if(!grouped[s.productName]) grouped[s.productName] = { sold:0, revenue:0, cost:0 };
+    grouped[s.productName].sold += s.qtyKg;
+    grouped[s.productName].revenue += s.totalAmount;
+    grouped[s.productName].cost += (s.qtyKg * (s.costPerKg || 0));
+  });
+  let html = '<div class="card"><h3>Profit Report</h3><table><tr><th>#</th><th>Product</th><th>Sold kg</th><th>Revenue</th><th>Cost</th><th>Profit</th></tr>';
+  let i = 0, totalProfit = 0;
+  for(const k in grouped){
+    i++;
+    const g = grouped[k];
+    const profit = g.revenue - g.cost;
+    totalProfit += profit;
+    html += `<tr><td>${i}</td><td>${escapeHtml(k)}</td><td>${g.sold.toFixed(3)}</td><td>${fmt(g.revenue)}</td><td>${fmt(g.cost)}</td><td>${fmt(profit)}</td></tr>`;
+  }
+  if(i === 0) html += '<tr><td colspan="6" class="small-muted">No sales</td></tr>';
+  html += `</table><div class="total-box">Total Profit: ${fmt(totalProfit)}</div></div>`;
+  out.innerHTML = html;
+}
+
+/* ====== Charts ====== */
+function renderCharts(out){
+  const months = {};
+  SALES.forEach(s => {
+    const m = s.date.slice(0,7);
+    if(!months[m]) months[m] = {rev:0, cost:0};
+    months[m].rev += s.totalAmount;
+    months[m].cost += (s.qtyKg * s.costPerKg);
+  });
+  const labels = Object.keys(months).sort();
+  const rev = labels.map(k => months[k].rev || 0);
+  const profit = labels.map(k => (months[k].rev - months[k].cost) || 0);
+
+  out.innerHTML = '<div class="card"><h3>Monthly Revenue & Profit</h3><div class="chart-wrap"><canvas id="monthlyChart"></canvas></div></div>';
+  const ctx = document.getElementById('monthlyChart');
+  if(CHARTS.monthly) CHARTS.monthly.destroy();
+  CHARTS.monthly = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Revenue', data: rev, backgroundColor: 'rgba(37,99,235,0.85)' },
+        { label: 'Profit', data: profit, backgroundColor: 'rgba(16,185,129,0.85)' }
+      ]
+    },
+    options: { responsive:true, maintainAspectRatio:false }
+  });
+}
+
+/* ====== SETTINGS ====== */
+function renderSettings(out){
+  out.innerHTML = `<div class="card"><h3>Settings</h3>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div>GST %</div>
+      <input id="gstField" class="input" style="width:120px" value="${GST}"/>
+      <button class="btn" onclick="saveGst()">Save</button>
+    </div>
+  </div>`;
+}
+function saveGst(){ GST = parseFloat(document.getElementById('gstField').value) || GST; saveAll(); alert('Saved'); }
+
+/* ====== Search ====== */
+function globalSearch(q){
+  q = (q || '').toLowerCase().trim();
+  if(!q) return;
+  const prods = PRODUCTS.filter(p => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q));
+  const invs = INVOICES.filter(i => i.invoiceNo.toLowerCase().includes(q) || (i.customer || '').toLowerCase().includes(q));
+  const salesRes = SALES.filter(s => s.productName.toLowerCase().includes(q));
+  let html = '<div class="card"><h3>Search results</h3>';
+  html += '<div><strong>Products</strong>';
+  if(prods.length === 0) html += '<div class="small-muted">No products</div>';
+  else {
+    html += '<table><tr><th>Name</th><th>SKU</th><th>Stock</th></tr>';
+    prods.forEach(p => html += `<tr><td>${escapeHtml(p.name)}</td><td>${p.sku}</td><td>${p.stockKg.toFixed(3)}</td></tr>`);
+    html += '</table>';
+  }
+  html += '</div><div style="margin-top:10px"><strong>Invoices</strong>';
+  if(invs.length === 0) html += '<div class="small-muted">No invoices</div>';
+  else {
+    html += '<table><tr><th>Invoice</th><th>Date</th><th>Total</th></tr>';
+    invs.forEach(i => html += `<tr><td>${i.invoiceNo}</td><td>${i.date}</td><td>${fmt(i.totalAmount)}</td></tr>`);
+    html += '</table>';
+  }
+  html += '</div></div>';
+  document.getElementById('content').innerHTML = html;
+}
+
+/* ====== modal helpers ====== */
+function showModal(html){
+  document.getElementById('modalBox').innerHTML = html;
+  document.getElementById('modal').style.display = 'flex';
+}
+function closeModal(){
+  document.getElementById('modalBox').innerHTML = '';
+  document.getElementById('modal').style.display = 'none';
+}
+
+/* ====== Init ====== */
+function init(){
+  updateBillProducts();
+  // pre-set some visible elements if app open
+}
+init();
+
+/* ====== Helpers for updating POS selects & tables ====== */
+function updateBillProducts(){
+  const sel = document.getElementById('posProduct') || document.getElementById('billProduct');
+  if(!sel) return;
+  sel.innerHTML = PRODUCTS.map(p => `<option value="${p.id}">${escapeHtml(p.name)} | ${p.sku} | ${fmt(p.pricePerKg)}/kg | Stock:${p.stockKg}kg</option>`).join('');
+}
+
+/* ====== expose common functions for onclick handlers in HTML (if any) ====== */
+window.doLogin = doLogin;
+window.autoFill = autoFill;
+window.doLogout = doLogout;
+window.showView = showView;
+window.addProduct = addProduct;
+window.updateProductsTable = updateProductsTable;
+window.openEdit = openEdit;
+window.deleteProduct = deleteProduct;
+window.posAdd = posAdd;
+window.updateBillProducts = updateBillProducts;
+window.renderCart = renderCart;
+window.removeFromCart = removeFromCart;
+window.posClear = posClear;
+window.posPay = posPay;
+window.completePayment = completePayment;
+window.printInvoice = printInvoice;
+window.renderRecentInv = renderRecentInv;
+window.renderInvoices = renderInvoices;
+window.saveGst = saveGst;
+window.renderToday = renderToday;
+window.renderProfit = renderProfit;
+window.renderCharts = renderCharts;
+window.globalSearch = globalSearch;
+window.showModal = showModal;
+window.closeModal = closeModal;
+
+/* ====== Small safety: on page load hide app (login remains) ====== */
+document.addEventListener('DOMContentLoaded', ()=> {
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+});
+</script>
+
+</body>
+</html>
